@@ -52,16 +52,22 @@ export const authOptions: NextAuthOptions = {
     signOut: '/auth/signout',
     error: '/auth/error',
   },
+  
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role;
+        token.picture = user.image;
+      }
+      if (trigger === "update" && session?.user?.image) {
+        token.picture = session.user.image;
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         session.user.role = token.role;
+        session.user.image = token.picture;
       }
       return session;
     }
