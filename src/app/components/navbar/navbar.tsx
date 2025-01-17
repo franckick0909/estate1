@@ -7,8 +7,11 @@ import { BurgerButton } from "./burgerButton";
 import { NavbarMobile } from "./navbarMobile";
 import { useSession, signOut } from "next-auth/react";
 import { User } from "@prisma/client";
+import { useUser } from "@/context/UserContext";
+import { MdPerson } from "react-icons/md";
 
 export default function Navbar() {
+  const { userName, userImage } = useUser();
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -68,15 +71,24 @@ export default function Navbar() {
           ) : session ? (
             <div className="flex items-center justify-center gap-2">
               <div className="w-12 h-12 rounded-full overflow-hidden shadow-md">
-                <Image
-                  src={session.user?.image || "https://via.placeholder.com/150"}
-                  alt={session.user?.name || "utilisateur"}
-                  width={50}
-                  height={50}
-                  className="object-cover w-full h-full rounded-full"
-                />
+                {userImage ? (
+                  <Image
+                    src={userImage || "https://via.placeholder.com/150"}
+                    alt={userName || "utilisateur"}
+                    width={50}
+                    height={50}
+                    className="object-cover w-full h-full rounded-full"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
+                    <MdPerson className="text-gray-500 text-2xl" />
+                  </div>
+                )}
               </div>
-              <span className="text-sm md:text-base">{session.user?.name}</span>
+
+              {userName && (
+                <span className="text-sm md:text-base">{userName}</span>
+              )}
               <div className="relative">
                 <Link
                   href="/profil"

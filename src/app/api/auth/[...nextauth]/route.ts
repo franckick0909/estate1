@@ -1,11 +1,35 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcrypt";
-import NextAuth from "next-auth/next";
-import { User } from "@prisma/client";
+import { NextAuthOptions } from "next-auth";
 import { Adapter } from "next-auth/adapters";
+import NextAuth from "next-auth/next";
+import CredentialsProvider from "next-auth/providers/credentials";
+
+// Étendre les types pour inclure les propriétés personnalisées
+declare module "next-auth" {
+  interface User {
+    id: string;
+    role: string;
+  }
+
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      role: string;
+    };
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    role: string;
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as Adapter,
@@ -14,21 +38,21 @@ export const authOptions: NextAuthOptions = {
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "text" },
-        password: { label: "Mot de passe", type: "password" }
+        password: { label: "Password", type: "password" },
       },
-      async authorize(credentials): Promise<User | null> {
+      async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error('Informations de connexion requises');
+          return null;
         }
 
         const user = await prisma.user.findUnique({
           where: {
-            email: credentials.email
-          }
+            email: credentials.email,
+          },
         });
 
         if (!user || !user.password) {
-          throw new Error('Utilisateur non trouvé');
+          return null;
         }
 
         const isPasswordValid = await bcrypt.compare(
@@ -37,41 +61,64 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
-          throw new Error('Mot de passe incorrect');
+          return null;
         }
 
-        return user;
-      }
-    })
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role || "user",
+          image: user.image,
+        };
+      },
+    }),
   ],
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
   },
-  pages: {
-    signIn: '/auth/signin',
-    signOut: '/auth/signout',
-    error: '/auth/error',
-  },
-  
   callbacks: {
     async jwt({ token, user, trigger, session }) {
+      if (trigger === "update" && session?.user) {
+        return {
+          ...token,
+          picture: session.user.image || token.picture,
+          name: session.user.name || token.name,
+          email: session.user.email || token.email,
+        };
+      }
       if (user) {
         token.role = user.role;
-        token.picture = user.image;
-      }
-      if (trigger === "update" && session?.user?.image) {
-        token.picture = session.user.image;
+        token.id = user.id;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session?.user) {
-        session.user.role = token.role;
-        session.user.image = token.picture;
+      if (session.user) {
+        session.user.role = token.role as string;
+        session.user.id = token.id as string;
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
+        session.user.image = token.picture as string | null;
       }
       return session;
-    }
-  }
+    },
+  },
+  events: {
+    async signOut() {
+      // Nettoyage si nécessaire
+    },
+    async updateUser({ user }) {
+      // Gérer la mise à jour de l'utilisateur si nécessaire
+      console.log("User updated:", user);
+    },
+  },
+  pages: {
+    signIn: "/auth/signin",
+    signOut: "/auth/signout",
+    error: "/auth/error",
+  },
 };
 
 const handler = NextAuth(authOptions);
