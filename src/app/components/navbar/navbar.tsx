@@ -110,13 +110,13 @@ export default function Navbar() {
           ) : (
             <>
               <Link
-                href="/auth/signin"
+                href="/signin"
                 className="w-full sm:w-auto flex items-center justify-center gap-2 border border-violet-600 text-violet-600 rounded-md p-2 hover:bg-violet-600 hover:text-white transition-colors text-sm md:text-base"
               >
                 Se connecter
               </Link>
               <Link
-                href="/auth/signup"
+                href="/signup"
                 className="w-full sm:w-auto flex items-center justify-center gap-2 border border-violet-600 text-white bg-violet-600 rounded-md p-2 hover:bg-transparent hover:text-violet-600 transition-colors text-sm md:text-base"
               >
                 S&apos;inscrire
