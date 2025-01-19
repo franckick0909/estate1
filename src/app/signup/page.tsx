@@ -68,15 +68,18 @@ export default function SignUp() {
         throw new Error(data.error || "Erreur lors de l'inscription");
       }
 
+      // Stocker l'email pour la page de vérification
+      localStorage.setItem("pendingVerificationEmail", email);
+
       setMessage({
         type: "success",
-        content: "Inscription réussie !",
+        content: "Inscription réussie ! Vérifiez votre email.",
       });
 
-      // Rediriger vers la page de connexion après quelques secondes
+      // Rediriger vers la page de confirmation
       setTimeout(() => {
-        router.push("/signin");
-      }, 3000);
+        router.push("/verify-email-sent");
+      }, 2000);
     } catch (error) {
       console.error("Erreur:", error);
       setMessage({

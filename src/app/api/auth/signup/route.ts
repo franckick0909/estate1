@@ -1,4 +1,6 @@
 import prisma from "@/lib/prisma";
+import { sendVerificationEmail } from "@/lib/sendgrid";
+import { generateVerificationToken } from "@/lib/tokens";
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
 
@@ -38,6 +40,15 @@ export async function POST(request: Request) {
       },
     });
 
+    // Générer et envoyer l'email de vérification
+    try {
+      const token = await generateVerificationToken(email);
+      await sendVerificationEmail(email, name, token);
+    } catch (emailError) {
+      console.error("Erreur d'envoi d'email:", emailError);
+      // On continue même si l'email échoue
+    }
+
     // Créer un objet sans le mot de passe
     const userWithoutPassword = {
       id: user.id,
@@ -49,7 +60,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        message: "Compte créé avec succès",
+        message: "Compte créé avec succès. Veuillez vérifier votre email.",
         user: userWithoutPassword,
       },
       { status: 201 }
