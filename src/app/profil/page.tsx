@@ -1,6 +1,6 @@
 import { FaEdit, FaPlus } from "react-icons/fa";
 import Image from "next/image";
-import MaList from "./maList/maList";
+import MaList from "@/app/profil/maList/maList";
 import Chat from "@/components/chat";
 import Link from "next/link";
 

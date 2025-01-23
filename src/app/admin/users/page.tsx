@@ -3,7 +3,7 @@
 import { useToast } from "@/components/toast/toast";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-import UserActions from "./components/UserActions";
+import UserActions from "@/app/admin/users/components/UserActions";
 
 // Définition du type User
 interface User {

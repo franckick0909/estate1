@@ -1,7 +1,7 @@
-import Card from "../components/card";
-import Filter from "../components/filter";
-import Map from "../components/map/map";
-import { listData } from "../data/listData";
+import Card from "@/components/card";
+import Filter from "@/components/filter";
+import Map from "@/components/map/map";
+import { listData } from "@/app/data/listData";
 
 export default function List() {
   const data = listData;
