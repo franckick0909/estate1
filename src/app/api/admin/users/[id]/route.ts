@@ -1,11 +1,16 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
-import { NextRequest, NextResponse } from "next/server";
+
+type RouteContext = {
+  params: {
+    id: string;
+  };
+};
 
 export async function DELETE(
-  request: NextRequest,
-  context: { params: { id: string } }
+  request: Request,
+  { params }: RouteContext
 ): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
@@ -26,7 +31,7 @@ export async function DELETE(
 
     // Vérifier si l'utilisateur existe
     const userToDelete = await prisma.user.findUnique({
-      where: { id: context.params.id },
+      where: { id: params.id },
     });
 
     if (!userToDelete) {
@@ -49,16 +54,16 @@ export async function DELETE(
     });
 
     await prisma.session.deleteMany({
-      where: { userId: context.params.id },
+      where: { userId: params.id },
     });
 
     await prisma.account.deleteMany({
-      where: { userId: context.params.id },
+      where: { userId: params.id },
     });
 
     // Maintenant supprimer l'utilisateur
     await prisma.user.delete({
-      where: { id: context.params.id },
+      where: { id: params.id },
     });
 
     return new Response(
@@ -89,33 +94,38 @@ export async function DELETE(
 }
 
 export async function PUT(
-  request: NextRequest,
-  context: { params: { id: string } }
-): Promise<NextResponse> {
+  request: Request,
+  { params }: RouteContext
+): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+      return new Response(JSON.stringify({ error: "Non autorisé" }), {
+        status: 401,
+      });
     }
 
     const data = await request.json();
 
     const updatedUser = await prisma.user.update({
-      where: { id: context.params.id },
+      where: { id: params.id },
       data: {
         role: data.role,
       },
     });
 
-    return NextResponse.json({
-      message: "Rôle mis à jour avec succès",
-      user: updatedUser,
-    });
+    return new Response(
+      JSON.stringify({
+        message: "Rôle mis à jour avec succès",
+        user: updatedUser,
+      }),
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Erreur de mise à jour:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de la mise à jour" },
+    return new Response(
+      JSON.stringify({ error: "Erreur lors de la mise à jour" }),
       { status: 500 }
     );
   }
