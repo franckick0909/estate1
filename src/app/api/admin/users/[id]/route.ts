@@ -1,102 +1,17 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
 
-interface ApiResponse {
-  success: boolean;
-  user?: {
+interface Params {
+  params: {
     id: string;
-    name: string | null;
-    email: string;
-    role: string;
-    image: string | null;
   };
-  error?: string;
-  message?: string;
-}
-
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-): Promise<Response> {
-  const defaultResponse: ApiResponse = {
-    success: false,
-    error: "Erreur inconnue",
-  };
-
-  try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Accès non autorisé",
-        }),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    const data = await request.json();
-    const { name, email, role } = data;
-
-    if (!params.id || !email) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "ID et email requis",
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    const updatedUser = await prisma.user.update({
-      where: { id: params.id },
-      data: {
-        name,
-        email,
-        role,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        image: true,
-      },
-    });
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        user: updatedUser,
-        message: "Utilisateur mis à jour avec succès",
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  } catch (error) {
-    if (error instanceof Error) {
-      defaultResponse.error = error.message;
-    }
-    return new Response(JSON.stringify(defaultResponse), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: Params
 ): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
@@ -175,6 +90,39 @@ export async function DELETE(
         status: 500,
         headers: { "Content-Type": "application/json" },
       }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: Params
+): Promise<NextResponse> {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const data = await request.json();
+
+    const updatedUser = await prisma.user.update({
+      where: { id: params.id },
+      data: {
+        role: data.role,
+      },
+    });
+
+    return NextResponse.json({
+      message: "Rôle mis à jour avec succès",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Erreur de mise à jour:", error);
+    return NextResponse.json(
+      { error: "Erreur lors de la mise à jour" },
+      { status: 500 }
     );
   }
 }
