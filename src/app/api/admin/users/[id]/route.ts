@@ -3,15 +3,9 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
-interface Params {
-  params: {
-    id: string;
-  };
-}
-
 export async function DELETE(
   request: NextRequest,
-  { params }: Params
+  context: { params: { id: string } }
 ): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
@@ -32,7 +26,7 @@ export async function DELETE(
 
     // Vérifier si l'utilisateur existe
     const userToDelete = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id: context.params.id },
     });
 
     if (!userToDelete) {
@@ -55,16 +49,16 @@ export async function DELETE(
     });
 
     await prisma.session.deleteMany({
-      where: { userId: params.id },
+      where: { userId: context.params.id },
     });
 
     await prisma.account.deleteMany({
-      where: { userId: params.id },
+      where: { userId: context.params.id },
     });
 
     // Maintenant supprimer l'utilisateur
     await prisma.user.delete({
-      where: { id: params.id },
+      where: { id: context.params.id },
     });
 
     return new Response(
@@ -96,7 +90,7 @@ export async function DELETE(
 
 export async function PUT(
   request: NextRequest,
-  { params }: Params
+  context: { params: { id: string } }
 ): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
@@ -108,7 +102,7 @@ export async function PUT(
     const data = await request.json();
 
     const updatedUser = await prisma.user.update({
-      where: { id: params.id },
+      where: { id: context.params.id },
       data: {
         role: data.role,
       },
