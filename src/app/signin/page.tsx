@@ -1,15 +1,18 @@
 "use client";
 
+
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Link from "next/link";
 import { MdEmail, MdLock } from "react-icons/md";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function SignIn() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -18,7 +21,6 @@ export default function SignIn() {
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
 
     try {
       const result = await signIn("credentials", {
@@ -50,7 +52,7 @@ export default function SignIn() {
           <p className="mt-2 text-sm text-gray-600">
             Ou{" "}
             <Link
-              href="/auth/signup"
+              href="/signup"
               className="font-medium text-violet-600 hover:text-violet-500"
             >
               créer un nouveau compte
@@ -94,14 +96,11 @@ export default function SignIn() {
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <MdLock className="h-5 w-5 text-gray-400" />
                 </div>
-                <input
+                <PasswordInput
                   id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm text-gray-900"
-                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="********"
                 />
               </div>
             </div>
@@ -117,14 +116,40 @@ export default function SignIn() {
               disabled={isLoading}
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:bg-violet-300 disabled:cursor-not-allowed transition-colors"
             >
-              {isLoading ? "Connexion..." : "Se connecter"}
+              {isLoading ? (
+                <div className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Connexion...
+                </div>
+              ) : (
+                "Se connecter"
+              )}
             </button>
           </div>
         </form>
 
         <div className="mt-4 text-center">
           <Link
-            href="/auth/forgot-password"
+            href="/forgot-password"
             className="text-sm text-violet-600 hover:text-violet-500"
           >
             Mot de passe oublié ?
@@ -133,4 +158,4 @@ export default function SignIn() {
       </div>
     </div>
   );
-} 
+}

@@ -1,7 +1,8 @@
 import { FaEdit, FaPlus } from "react-icons/fa";
 import Image from "next/image";
 import MaList from "./maList/maList";
-import Chat from "../components/chat";
+import Chat from "@/components/chat";
+import Link from "next/link";
 
 export default function Profil() {
   return (
@@ -15,6 +16,7 @@ export default function Profil() {
               Informations utilisateur
             </h2>
             <div className="w-full h-[1px] bg-violet-600"></div>
+            <Link href="/profil/modifier">
             <button
               title="Modifier"
               type="button"
@@ -22,9 +24,10 @@ export default function Profil() {
             >
               <FaEdit />
               Modifier
-            </button>
+              </button>
+            </Link>
           </div>
-        
+
 
         <div className="flex flex-col gap-4 text-gray-800 mt-8 px-1">
           <div className="flex items-center gap-2">

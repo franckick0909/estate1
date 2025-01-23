@@ -1,7 +1,12 @@
 import Providers from "@/app/providers";
+import SignInModal from "@/components/auth/SignInModal";
+import SignUpModal from "@/components/auth/SignUpModal";
+import VerifyEmailModal from "@/components/auth/VerifyEmailModal";
+import Navbar from "@/components/navbar/navbar";
+import { ToastProvider } from "@/components/toast/toast";
+import { ProfileImageProvider } from "@/context/ProfileImageContext";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Navbar from "./components/navbar/navbar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,12 +32,19 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body
-        className={` mx-auto ${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`max-w-screen-2xl mx-auto ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>
-          <Navbar />
-          {children}
-        </Providers>
+        <ProfileImageProvider>
+          <ToastProvider>
+            <Providers>
+              <Navbar />
+              {children}
+            </Providers>
+            <SignInModal />
+            <SignUpModal />
+            <VerifyEmailModal />
+          </ToastProvider>
+        </ProfileImageProvider>
       </body>
     </html>
   );

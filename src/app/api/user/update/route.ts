@@ -17,11 +17,31 @@ export async function PUT(request: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
-      return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
     const data = await request.json();
     const { name, email, currentPassword, newPassword, image } = data;
+
+    // Si une nouvelle image est fournie, mettre à jour uniquement l'image
+    if (image) {
+      const updatedUser = await prisma.user.update({
+        where: { email: session.user.email },
+        data: { image },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+        },
+      });
+
+      return NextResponse.json({
+        message: "Image mise à jour avec succès",
+        user: updatedUser,
+      });
+    }
 
     // Récupérer l'utilisateur actuel
     const currentUser = await prisma.user.findUnique({
@@ -36,14 +56,14 @@ export async function PUT(request: Request) {
       },
     });
 
-    if (!currentUser || !currentUser.password) {
+    if (!currentUser) {
       return NextResponse.json(
         { message: "Utilisateur non trouvé" },
         { status: 404 }
       );
     }
 
-    // Préparer les données à mettre à jour avec le type correct
+    // Préparer les données à mettre à jour
     const updateData: UpdateData = {};
 
     // Gérer la mise à jour du nom
@@ -73,7 +93,7 @@ export async function PUT(request: Request) {
       // Vérifier l'ancien mot de passe
       const isPasswordValid = await bcrypt.compare(
         currentPassword,
-        currentUser.password
+        currentUser.password!
       );
 
       if (!isPasswordValid) {
@@ -118,9 +138,9 @@ export async function PUT(request: Request) {
       user: updatedUser,
     });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour:", error);
+    console.error("Erreur de mise à jour:", error);
     return NextResponse.json(
-      { message: "Erreur lors de la mise à jour du profil" },
+      { error: "Erreur lors de la mise à jour" },
       { status: 500 }
     );
   }

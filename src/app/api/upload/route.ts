@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
+import { NextResponse } from "next/server";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -29,10 +29,11 @@ export async function POST(request: Request) {
         .upload_stream(
           {
             folder: "estate/avatars",
+            resource_type: "auto",
           },
           (error, result) => {
             if (error) reject(error);
-            resolve(result);
+            else resolve(result);
           }
         )
         .end(buffer);
@@ -40,10 +41,16 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Erreur upload:", error);
+    console.error("Erreur d'upload:", error);
     return NextResponse.json(
       { error: "Erreur lors de l'upload" },
       { status: 500 }
     );
   }
 }
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};

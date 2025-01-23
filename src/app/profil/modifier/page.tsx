@@ -1,6 +1,7 @@
 "use client";
 
-import ProgressBar from "@/app/components/ProgressBar";
+import ProgressBar from "@/components/ProgressBar";
+import { useProfileImage } from "@/context/ProfileImageContext";
 import {
   validateEmail,
   validateName,
@@ -31,9 +32,13 @@ interface UpdateData {
   newPassword?: string;
 }
 
-export default function ModifierProfil() {
+export default function Modifier() {
   const { data: session, update } = useSession();
   const router = useRouter();
+  const { updateProfileImage } = useProfileImage();
+  const [localImage, setLocalImage] = useState<string | null>(
+    session?.user?.image || null
+  );
 
   // États existants
   const [isUploading, setIsUploading] = useState(false);
@@ -268,80 +273,80 @@ export default function ModifierProfil() {
     setShowConfirmModal(false);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return;
-
+  const handleImageUpload = async (file: File) => {
     setIsUploading(true);
     setUploadProgress(0);
-    setMessage({ type: "", content: "" });
-
-    const file = e.target.files[0];
-
-    // Vérification de la taille du fichier
-    if (file.size > 5 * 1024 * 1024) {
-      setMessage({
-        type: "error",
-        content: "Le fichier ne doit pas dépasser 5MB",
-      });
-      setIsUploading(false);
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      setUploadProgress(30); // Simulation du début de l'upload
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const formData = new FormData();
+      formData.append("file", file);
 
-      setUploadProgress(60); // Simulation de la progression
+      const xhr = new XMLHttpRequest();
 
-      if (!response.ok) throw new Error("Erreur lors de l'upload");
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(progress);
+        }
+      };
 
-      const data = await response.json();
-      const imageUrl = data.secure_url;
+      const uploadPromise = new Promise<{ secure_url: string }>(
+        (resolve, reject) => {
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              resolve(JSON.parse(xhr.response));
+            } else {
+              reject(new Error("Upload failed"));
+            }
+          };
+          xhr.onerror = () => reject(new Error("Upload failed"));
+        }
+      );
 
-      setUploadProgress(80); // Simulation de la progression
+      xhr.open("POST", "/api/upload");
+      xhr.send(formData);
+
+      const uploadResult = await uploadPromise;
+      const newImageUrl = uploadResult.secure_url;
 
       const updateResponse = await fetch("/api/user/update", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ image: imageUrl }),
+        body: JSON.stringify({ image: newImageUrl }),
       });
 
-      if (!updateResponse.ok) throw new Error("Erreur lors de la mise à jour");
+      if (!updateResponse.ok) {
+        throw new Error("Erreur lors de la mise à jour");
+      }
+
+      // Mettre à jour l'image locale et globale
+      setLocalImage(newImageUrl);
+      updateProfileImage(newImageUrl);
 
       await update({
         ...session,
         user: {
           ...session?.user,
-          image: imageUrl,
+          image: newImageUrl,
         },
       });
-
-      setUploadProgress(100); // Upload terminé
 
       setMessage({
         type: "success",
         content: "Photo de profil mise à jour avec succès",
       });
+
+      router.refresh();
     } catch (error) {
       console.error("Erreur:", error);
       setMessage({
         type: "error",
-        content: "Erreur lors de la mise à jour de la photo de profil",
+        content: "Erreur lors de la mise à jour de la photo",
       });
     } finally {
-      // Attendre un peu avant de cacher la barre de progression
-      setTimeout(() => {
-        setIsUploading(false);
-        setUploadProgress(0);
-      }, 1000);
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -378,57 +383,56 @@ export default function ModifierProfil() {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-xl shadow-lg p-6 sm:p-8 col-span-2 md:col-span-1"
           >
-            <div className="flex flex-col h-full">
+            <div className="relative flex flex-col h-full">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">
                 Photo de profil
               </h2>
-              <div className="relative mb-4">
-                <div className="flex justify-between gap-4 flex-wrap">
-                  <div className="w-32 h-32 rounded-full overflow-hidden relative shadow-lg">
-                    {session.user?.image ? (
-                      <Image
-                        src={session.user.image}
-                        alt="Photo de profil"
-                        fill
-                        className="object-cover"
-                        sizes="100vw"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-violet-100 flex items-center justify-center">
-                        <MdPerson className="w-20 h-20 text-violet-400" />
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 max-w-48">
-                    Vous pouvez modifier votre photo de profil en cliquant sur
-                    le bouton ci-dessous.
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between mt-6 flex-wrap">
-                  <p className="text-xs text-gray-700 max-w-48">
-                    Seulement les fichiers JPG, JPEG, PNG et GIF sont autorisés.
-                  </p>
-                  <p className="text-xs text-gray-700 max-w-48">
-                    La taille du fichier ne doit pas dépasser 5MB.
-                  </p>
-                </div>
-                <label
-                  htmlFor="avatar-upload"
-                  className="absolute bottom-1/4 right-0 bg-violet-600 text-white p-4 rounded-full cursor-pointer hover:bg-violet-700 transition-colors"
-                >
-                  <MdEdit className="w-5 h-5" />
-                  <input
-                    title="Modifier votre photo de profil"
-                    type="file"
-                    id="avatar-upload"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={isUploading}
+              <div className="relative w-32 h-32 mx-auto mb-4">
+                {localImage ? (
+                  <Image
+                    src={localImage}
+                    alt="Photo de profil"
+                    fill
+                    sizes="(max-width: 128px) 100vw, 128px"
+                    className="rounded-full object-cover"
+                    priority
                   />
-                </label>
+                ) : (
+                  <div className="w-full h-full rounded-full bg-violet-100 flex items-center justify-center">
+                    <span className="text-3xl text-violet-600">
+                      {session?.user?.name?.charAt(0) ||
+                        session?.user?.email?.charAt(0)}
+                    </span>
+                  </div>
+                )}
               </div>
+              <div className="flex items-center justify-between mt-6 flex-wrap">
+                <p className="text-xs text-gray-700 max-w-48">
+                  Seulement les fichiers JPG, JPEG, PNG et GIF sont autorisés.
+                </p>
+                <p className="text-xs text-gray-700 max-w-48">
+                  La taille du fichier ne doit pas dépasser 5MB.
+                </p>
+              </div>
+              <label
+                htmlFor="avatar-upload"
+                className="absolute bottom-1/4 right-0 bg-violet-600 text-white p-4 rounded-full cursor-pointer hover:bg-violet-700 transition-colors"
+              >
+                <MdEdit className="w-5 h-5" />
+                <input
+                  title="Modifier votre photo de profil"
+                  type="file"
+                  id="avatar-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      handleImageUpload(e.target.files[0]);
+                    }
+                  }}
+                  disabled={isUploading}
+                />
+              </label>
               {isUploading && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -478,7 +482,7 @@ export default function ModifierProfil() {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder={session?.user?.name || "Votre nom"}
-                    className={`block w-full pl-10 pr-3 py-2 border rounded-md focus:ring-violet-500 focus:border-violet-500 transition-colors
+                    className={`block w-full pl-10 pr-3 py-2 border rounded-md focus:ring-violet-500 focus:border-violet-500 transition-colors placeholder:text-gray-500
                       ${modifiedFields.name ? "border-violet-300 bg-violet-50" : "border-gray-300"}
                       ${errors.name ? "border-red-300" : ""}
                     `}
@@ -519,11 +523,11 @@ export default function ModifierProfil() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder={session?.user?.email || "votre@email.com"}
-                    className={`block w-full pl-10 pr-3 py-2 border rounded-md focus:ring-violet-500 focus:border-violet-500 transition-colors
+                    className={`block w-full pl-10 pr-3 py-2 border rounded-md focus:ring-violet-500 focus:border-violet-500 transition-colors placeholder:text-gray-500
                       ${modifiedFields.email ? "border-violet-300 bg-violet-50" : "border-gray-300"}
                       ${errors.email ? "border-red-300" : ""}
                     `}
-                  />
+                  /> 
                 </div>
                 {errors.email && (
                   <motion.p

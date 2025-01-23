@@ -1,6 +1,6 @@
+import { generateToken } from "@/lib/jwt";
 import prisma from "@/lib/prisma";
 import { sendVerificationEmail } from "@/lib/sendgrid";
-import { generateVerificationToken } from "@/lib/tokens";
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
 
@@ -42,8 +42,12 @@ export async function POST(request: Request) {
 
     // Générer et envoyer l'email de vérification
     try {
-      const token = await generateVerificationToken(email);
-      await sendVerificationEmail(email, name, token);
+      const verificationToken = generateToken({ email: user.email });
+      await sendVerificationEmail(
+        user.email,
+        user.name || "",
+        verificationToken
+      );
     } catch (emailError) {
       console.error("Erreur d'envoi d'email:", emailError);
       // On continue même si l'email échoue

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import SearchBar from "../components/searchBar/searchBar";
+import SearchBar from "@/components/searchBar/searchBar";
 export default function Hero() {
   return (
     <div className="min-h-screen w-full flex relative">

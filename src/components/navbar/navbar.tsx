@@ -1,21 +1,32 @@
 "use client";
 
+import { useProfileImage } from "@/context/ProfileImageContext";
+import { useUser } from "@/context/UserContext";
+import { useAuthModal } from "@/hooks/useAuth";
+import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { MdPerson } from "react-icons/md";
 import { BurgerButton } from "./burgerButton";
 import { NavbarMobile } from "./navbarMobile";
-import { useSession, signOut } from "next-auth/react";
-import { User } from "@prisma/client";
-import { useUser } from "@/context/UserContext";
-import { MdPerson } from "react-icons/md";
 
 export default function Navbar() {
-  const { userName, userImage } = useUser();
+  const { userName } = useUser();
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const { openModal } = useAuthModal();
+  const { profileImage } = useProfileImage();
 
-  const navItems = ["Home", "About", "Contact", "Agents"];
+  // Utiliser profileImage s'il existe, sinon utiliser l'image de la session
+  const currentImage = profileImage || session?.user?.image;
+
+  const navItems = [
+    { label: "Home", href: "/" },
+    { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
+    { label: "Agents", href: "/agents" },
+  ];
 
   useEffect(() => {
     const handleResize = () => {
@@ -33,9 +44,9 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="flex justify-between items-center h-24 w-full text-gray-900 bg-white z-[100]">
+      <header className="flex justify-between items-center h-24 w-full text-gray-900 bg-white z-[50]">
         <div className="flex-[3] flex items-center gap-10 md:gap-16 lg:gap-20 h-full">
-          <div className="flex items-center gap-0 text-lg font-bold h-full z-[51] mr-3">
+          <div className="flex items-center gap-0 text-lg font-bold h-full mr-3">
             <Image
               src="/home1.svg"
               alt="logo"
@@ -49,17 +60,17 @@ export default function Navbar() {
             </span>
           </div>
 
-          <nav className="relative flex items-center justify-start gap-2 md:gap-4 lg:gap-6 xl:gap-8 max-sm:hidden w-full h-full">
+          <nav className="relative flex items-center justify-start gap-2 md:gap-4 lg:gap-6 xl:gap-8 max-sm:hidden w-full h-full z-[50]">
             {navItems.map((item) => (
               <Link
-                href="/"
-                key={item}
+                href={item.href}
+                key={item.label}
                 className="text-gray-900 hover:text-black font-inter tracking-wide relative inline-block
                           before:content-[''] before:absolute before:w-full before:h-[1px] before:bottom-0 before:left-0 
                           before:bg-black before:origin-right before:scale-x-0 hover:before:origin-left hover:before:scale-x-100
                           before:transition-transform before:duration-300 before:ease-in-out"
               >
-                {item}
+                {item.label}
               </Link>
             ))}
           </nav>
@@ -71,10 +82,10 @@ export default function Navbar() {
           ) : session ? (
             <div className="flex items-center justify-center gap-2">
               <div className="w-12 h-12 rounded-full overflow-hidden shadow-md">
-                {userImage ? (
+                {currentImage ? (
                   <Image
-                    src={userImage || "https://via.placeholder.com/150"}
-                    alt={userName || "utilisateur"}
+                    src={currentImage}
+                    alt="Photo de profil"
                     width={50}
                     height={50}
                     className="object-cover w-full h-full rounded-full"
@@ -109,18 +120,18 @@ export default function Navbar() {
             </div>
           ) : (
             <>
-              <Link
-                href="/signin"
+              <button
+                onClick={() => openModal("signin")}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 border border-violet-600 text-violet-600 rounded-md p-2 hover:bg-violet-600 hover:text-white transition-colors text-sm md:text-base"
               >
                 Se connecter
-              </Link>
-              <Link
-                href="/signup"
+              </button>
+              <button
+                onClick={() => openModal("signup")}
                 className="w-full sm:w-auto flex items-center justify-center gap-2 border border-violet-600 text-white bg-violet-600 rounded-md p-2 hover:bg-transparent hover:text-violet-600 transition-colors text-sm md:text-base"
               >
                 S&apos;inscrire
-              </Link>
+              </button>
             </>
           )}
         </div>
@@ -130,7 +141,7 @@ export default function Navbar() {
         </div>
       </header>
 
-      <NavbarMobile isOpen={isOpen} user={session?.user as User} />
+      <NavbarMobile isOpen={isOpen} user={session?.user || null} />
     </>
   );
 }

@@ -24,7 +24,8 @@ export const sendVerificationEmail = async (
   name: string,
   token: string
 ) => {
-  const verificationLink = `${process.env.NEXTAUTH_URL}/verify-email?token=${token}`;
+  // Utiliser NEXT_PUBLIC_APP_URL pour l'environnement de production
+  const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL}/verify-email?token=${token}`;
 
   console.log("🚀 Début envoi email avec SendGrid");
   console.log("📧 Email destinataire:", email);

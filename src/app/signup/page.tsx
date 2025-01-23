@@ -1,5 +1,6 @@
 "use client";
 
+import PasswordInput from "@/components/PasswordInput";
 import {
   validateEmail,
   validateName,
@@ -9,7 +10,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { MdEmail, MdLock, MdPerson } from "react-icons/md";
+import { MdEmail, MdPerson } from "react-icons/md";
 
 export default function SignUp() {
   const router = useRouter();
@@ -102,22 +103,28 @@ export default function SignUp() {
         className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg"
       >
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="text-3xl font-bold text-gray-900 text-center">
             Créer un compte
           </h2>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
+          <div className="space-y-4">
             {/* Champ Nom */}
             <div>
-              <label htmlFor="name" className="sr-only">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Nom complet
               </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <MdPerson className="h-5 w-5 text-gray-400" />
-                </span>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MdPerson
+                    className="h-5 w-5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                </div>
                 <input
                   id="name"
                   name="name"
@@ -125,26 +132,34 @@ export default function SignUp() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className={`appearance-none rounded-lg relative block w-full pl-10 pr-3 py-2 border ${
+                  className={`appearance-none block w-full pl-10 pr-3 py-2 border ${
                     errors.name ? "border-red-300" : "border-gray-300"
-                  } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-violet-500 focus:border-violet-500 focus:z-10 sm:text-sm`}
-                  placeholder="Nom complet"
+                  } rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm`}
+                  placeholder="Votre nom complet"
                 />
               </div>
               {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                <p className="mt-2 text-sm text-red-600" role="alert">
+                  {errors.name}
+                </p>
               )}
             </div>
 
             {/* Champ Email */}
             <div>
-              <label htmlFor="email" className="sr-only">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Adresse email
               </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <MdEmail className="h-5 w-5 text-gray-400" />
-                </span>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MdEmail
+                    className="h-5 w-5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                </div>
                 <input
                   id="email"
                   name="email"
@@ -152,73 +167,55 @@ export default function SignUp() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={`appearance-none rounded-lg relative block w-full pl-10 pr-3 py-2 border ${
+                  className={`appearance-none block w-full pl-10 pr-3 py-2 border ${
                     errors.email ? "border-red-300" : "border-gray-300"
-                  } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-violet-500 focus:border-violet-500 focus:z-10 sm:text-sm`}
-                  placeholder="Adresse email"
+                  } rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-violet-500 focus:border-violet-500 sm:text-sm`}
+                  placeholder="vous@exemple.com"
                 />
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                <p className="mt-2 text-sm text-red-600" role="alert">
+                  {errors.email}
+                </p>
               )}
             </div>
 
             {/* Champ Mot de passe */}
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Mot de passe
               </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <MdLock className="h-5 w-5 text-gray-400" />
-                </span>
-                <input
+              <div className="mt-1">
+                <PasswordInput
                   id="password"
-                  name="password"
-                  type="password"
-                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`appearance-none rounded-lg relative block w-full pl-10 pr-3 py-2 border ${
-                    errors.password ? "border-red-300" : "border-gray-300"
-                  } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-violet-500 focus:border-violet-500 focus:z-10 sm:text-sm`}
-                  placeholder="Mot de passe"
+                  placeholder="Votre mot de passe"
+                  error={errors.password}
                 />
               </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-              )}
             </div>
 
             {/* Champ Confirmation mot de passe */}
             <div>
-              <label htmlFor="confirmPassword" className="sr-only">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Confirmer le mot de passe
               </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <MdLock className="h-5 w-5 text-gray-400" />
-                </span>
-                <input
+              <div className="mt-1">
+                <PasswordInput
                   id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={`appearance-none rounded-lg relative block w-full pl-10 pr-3 py-2 border ${
-                    errors.confirmPassword
-                      ? "border-red-300"
-                      : "border-gray-300"
-                  } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-violet-500 focus:border-violet-500 focus:z-10 sm:text-sm`}
-                  placeholder="Confirmer le mot de passe"
+                  placeholder="Confirmez votre mot de passe"
+                  error={errors.confirmPassword}
                 />
               </div>
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.confirmPassword}
-                </p>
-              )}
             </div>
           </div>
 
@@ -273,7 +270,7 @@ export default function SignUp() {
 
         <div className="text-sm text-center">
           <Link
-            href="/login"
+            href="/signin"
             className="font-medium text-violet-600 hover:text-violet-500"
           >
             Déjà inscrit ? Connectez-vous

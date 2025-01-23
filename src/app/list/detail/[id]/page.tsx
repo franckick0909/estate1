@@ -1,5 +1,5 @@
-import Map from "@/app/components/map/map";
-import Slider from "@/app/components/slider";
+import Map from "@/components/map/map";
+import Slider from "@/components/slider";
 import { listData, userData } from "@/app/data/listData";
 import Image from "next/image";
 import { MdChat, MdBookmark} from "react-icons/md";

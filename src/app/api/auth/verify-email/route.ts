@@ -1,18 +1,28 @@
+import { verifyToken } from "@/lib/jwt";
 import prisma from "@/lib/prisma";
-import { sendVerificationEmail } from "@/lib/sendgrid";
-import { generateVerificationToken } from "@/lib/tokens";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { email, name } = await request.json();
+    const token = request.nextUrl.searchParams.get("token");
+    console.log("Token reçu:", token);
 
-    if (!email) {
-      return NextResponse.json({ error: "Email requis" }, { status: 400 });
+    if (!token) {
+      return NextResponse.json({ error: "Token manquant" }, { status: 400 });
+    }
+
+    const decoded = verifyToken(token);
+    console.log("Token décodé:", decoded);
+
+    if (!decoded || !decoded.email) {
+      return NextResponse.json(
+        { error: "Token invalide ou expiré" },
+        { status: 400 }
+      );
     }
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: decoded.email },
     });
 
     if (!user) {
@@ -22,59 +32,23 @@ export async function POST(request: Request) {
       );
     }
 
-    const token = await generateVerificationToken(email);
-    await sendVerificationEmail(email, name || "Utilisateur", token);
-
-    return NextResponse.json({
-      message: "Email de vérification envoyé",
-    });
-  } catch (error) {
-    console.error("Erreur:", error);
-    return NextResponse.json(
-      { error: "Erreur lors de l'envoi de l'email" },
-      { status: 500 }
-    );
-  }
-}
-
-// Route pour vérifier le token
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const token = searchParams.get("token");
-
-    if (!token) {
-      return NextResponse.json({ error: "Token manquant" }, { status: 400 });
-    }
-
-    const verificationToken = await prisma.verificationToken.findUnique({
-      where: { token },
-    });
-
-    if (!verificationToken) {
-      return NextResponse.json({ error: "Token invalide" }, { status: 400 });
-    }
-
-    if (verificationToken.expires < new Date()) {
-      return NextResponse.json({ error: "Token expiré" }, { status: 400 });
-    }
-
-    // Mettre à jour l'utilisateur
     await prisma.user.update({
-      where: { email: verificationToken.identifier },
+      where: { email: decoded.email },
       data: { emailVerified: new Date() },
     });
 
-    // Supprimer le token utilisé
-    await prisma.verificationToken.delete({
-      where: { token },
-    });
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.NEXTAUTH_URL ||
+      "http://localhost:3000";
 
     return NextResponse.json({
+      success: true,
       message: "Email vérifié avec succès",
+      redirectUrl: `${baseUrl}?verified=true`,
     });
   } catch (error) {
-    console.error("Erreur:", error);
+    console.error("Erreur de vérification:", error);
     return NextResponse.json(
       { error: "Erreur lors de la vérification" },
       { status: 500 }

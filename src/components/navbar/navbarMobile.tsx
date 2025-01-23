@@ -1,16 +1,23 @@
+import { useProfileImage } from "@/context/ProfileImageContext";
+import { useAuthModal } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
+import { User } from "next-auth";
+import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
-import { User } from "next-auth";
 
-export const NavbarMobile = ({
-  isOpen,
-  user,
-}: {
+interface NavbarMobileProps {
   isOpen: boolean;
-  user: User | undefined;
-}) => {
+  user: User | null;
+}
+
+export function NavbarMobile({ isOpen, user }: NavbarMobileProps) {
+  const { openModal } = useAuthModal();
+  const { profileImage } = useProfileImage();
+  const { data: session } = useSession();
+
+  const currentImage = profileImage || session?.user?.image;
+
   const menuVariants = {
     open: {
       x: 0.5,
@@ -66,11 +73,12 @@ export const NavbarMobile = ({
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full overflow-hidden">
                   <Image
-                    src={user.image || "https://via.placeholder.com/150"}
+                    src={currentImage || "https://via.placeholder.com/150"}
                     alt={user.name || "utilisateur"}
                     width={50}
                     height={50}
                     className="object-cover w-full h-full rounded-full"
+                    priority
                   />
                 </div>
                 <span>{user.name}</span>
@@ -89,30 +97,20 @@ export const NavbarMobile = ({
               </button>
             </motion.div>
           ) : (
-            <motion.div
-              variants={{
-                open: {
-                  transition: { staggerChildren: 0.1, delayChildren: 0.2 },
-                },
-                closed: {
-                  transition: { staggerChildren: 0.05, staggerDirection: -1 },
-                },
-              }}
-              className="flex flex-col gap-2 w-full"
-            >
-              <Link
-                href="/auth/signin"
-                className="w-full text-center border border-violet-600 text-violet-600 rounded-md p-2 hover:bg-violet-600 hover:text-white transition-colors"
+            <div className="flex flex-col gap-4 mt-4">
+              <button
+                onClick={() => openModal("signin")}
+                className="w-full flex items-center justify-center gap-2 border border-violet-600 text-violet-600 rounded-md p-2 hover:bg-violet-600 hover:text-white transition-colors"
               >
                 Se connecter
-              </Link>
-              <Link
-                href="/auth/signup"
-                className="w-full text-center border border-violet-600 text-white bg-violet-600 rounded-md p-2 hover:bg-transparent hover:text-violet-600 transition-colors"
+              </button>
+              <button
+                onClick={() => openModal("signup")}
+                className="w-full flex items-center justify-center gap-2 border border-violet-600 text-white bg-violet-600 rounded-md p-2 hover:bg-transparent hover:text-violet-600 transition-colors"
               >
                 S&apos;inscrire
-              </Link>
-            </motion.div>
+              </button>
+            </div>
           )}
         </motion.div>
 
@@ -144,4 +142,4 @@ export const NavbarMobile = ({
       </div>
     </motion.nav>
   );
-};
+}
