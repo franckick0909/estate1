@@ -3,7 +3,7 @@
 import { listData } from "@/app/data/listData";
 import "leaflet/dist/leaflet.css";
 import { MapContainer, TileLayer } from "react-leaflet";
-import Pin from "./pin";
+import Pin from "@/components/map/pin";
 
 interface MapProps {
   latitude: number;
