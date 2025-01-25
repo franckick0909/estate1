@@ -1,9 +1,10 @@
 "use client";
 
+import { deleteUser, updateUserRole } from "@/actions/userActions";
+import UserActions from "@/components/admin/UserActions";
 import { useToast } from "@/components/toast/toast";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-import UserActions from "@/app/admin/users/components/UserActions";
 
 // Définition du type User
 interface User {
@@ -15,7 +16,7 @@ interface User {
   createdAt: string | null;
 }
 
-export default function UsersPage() {
+export default function AdminUsers() {
   const { showToast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -156,7 +157,42 @@ export default function UsersPage() {
                           : "N/A"}
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <UserActions user={user} onUpdate={fetchUsers} />
+                        <UserActions
+                          userId={user.id}
+                          currentRole={user.role}
+                          onDelete={async (userId) => {
+                            try {
+                              await deleteUser(userId);
+                              await fetchUsers(); // Recharger la liste après suppression
+                              showToast(
+                                "Utilisateur supprimé avec succès",
+                                "success"
+                              );
+                            } catch (error) {
+                              console.error(error);
+                              showToast(
+                                "Erreur lors de la suppression",
+                                "error"
+                              );
+                            }
+                          }}
+                          onUpdateRole={async (userId, newRole) => {
+                            try {
+                              await updateUserRole(userId, newRole);
+                              await fetchUsers(); // Recharger la liste après mise à jour
+                              showToast(
+                                "Rôle mis à jour avec succès",
+                                "success"
+                              );
+                            } catch (error) {
+                              console.error(error);
+                              showToast(
+                                "Erreur lors de la mise à jour",
+                                "error"
+                              );
+                            }
+                          }}
+                        />
                       </td>
                     </tr>
                   ))}
