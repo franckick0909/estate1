@@ -1,7 +1,8 @@
+import { authOptions } from "@/lib/auth"; // Assurez-vous que ce chemin est correct
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
 import { compare } from "bcrypt";
-import NextAuth, { type NextAuthOptions } from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 // Déplacer les options dans un fichier séparé
@@ -81,6 +82,8 @@ export const options: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
-const handler = NextAuth(options);
+// Créer les gestionnaires de route
+const handler = NextAuth(authOptions);
 
+// Exporter les gestionnaires GET et POST
 export { handler as GET, handler as POST };
